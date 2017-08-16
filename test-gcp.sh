@@ -53,11 +53,12 @@ hdfs dfs -mkdir -p src/test
 hdfs dfs -rm -r -f -skipTrash src/test/resources
 hdfs dfs -put ./src/test/resources src/test
 
-SPARK_CLASSPATH=./hail-all-spark-test.jar \
-       spark-submit \
-       --class org.testng.TestNG \
-       ./hail-all-spark-test.jar \
-       ./testng.xml
+spark-submit \
+  --class org.testng.TestNG \
+  --jars=./hail-all-spark-test.jar \
+  --conf='spark.driver.extraClassPath=./hail-all-spark-test.jar' \
+  --conf='spark.executor.extraClassPath=./hail-all-spark-test.jar' \
+  ./hail-all-spark-test.jar ./testng.xml
 EOF
 TEST_EXIT_CODE=$?
 set -e
