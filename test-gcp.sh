@@ -22,7 +22,7 @@ PATH=$PATH:/usr/local/google-cloud-sdk/bin
 function cleanup {
   gcloud --project broad-ctsa -q dataproc clusters delete --async $CLUSTER
 }
-trap cleanup EXIT
+trap cleanup EXIT SIGINT
 
 gcloud --project broad-ctsa dataproc clusters create $CLUSTER \
     --zone us-central1-f \
@@ -55,7 +55,6 @@ hdfs dfs -put ./src/test/resources src/test
 
 spark-submit \
   --class org.testng.TestNG \
-  --jars=./hail-all-spark-test.jar \
   --conf='spark.driver.extraClassPath=./hail-all-spark-test.jar' \
   --conf='spark.executor.extraClassPath=./hail-all-spark-test.jar' \
   ./hail-all-spark-test.jar ./testng.xml
