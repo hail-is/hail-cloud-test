@@ -46,7 +46,7 @@ gcloud --project broad-ctsa compute scp --recurse \
        $MASTER:~/src/test
 
 set +e
-cat <<EOF | gcloud --project broad-ctsa compute ssh $MASTER -- bash
+cat <<'EOF' | gcloud --project broad-ctsa compute ssh $MASTER -- bash
 set -ex
 
 hdfs dfs -mkdir -p src/test
@@ -55,9 +55,10 @@ hdfs dfs -put ./src/test/resources src/test
 
 spark-submit \
   --class org.testng.TestNG \
-  --conf='spark.driver.extraClassPath=./hail-all-spark-test.jar' \
-  --conf='spark.executor.extraClassPath=./hail-all-spark-test.jar' \
-  ./hail-all-spark-test.jar ./testng.xml
+  --jars file:$(pwd)/hail-all-spark-test.jar \
+  --conf "spark.driver.extraClassPath=file:$(pwd)/hail-all-spark-test.jar" \
+  --conf 'spark.executor.extraClassPath=./hail-all-spark-test.jar' \
+  file:$(pwd)/hail-all-spark-test.jar ./testng.xml
 EOF
 TEST_EXIT_CODE=$?
 set -e
