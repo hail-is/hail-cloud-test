@@ -20,6 +20,7 @@ MASTER=$CLUSTER-m
 PATH=$PATH:/usr/local/google-cloud-sdk/bin
 
 function cleanup {
+  gcloud --project broad-ctas compute scp $MASTER:test-output .
   gcloud --project broad-ctsa -q dataproc clusters delete --async $CLUSTER
 }
 trap cleanup EXIT
@@ -35,13 +36,13 @@ gcloud --project broad-ctsa dataproc clusters create $CLUSTER \
     --initialization-actions 'gs://hail-dataproc-deps/initialization-actions.sh'
 
 # copy up necessary files
-gcloud --project broad-ctsa compute copy-files \
+gcloud --project broad-ctsa compute scp \
        ./build/libs/hail-all-spark-test.jar \
        ./testng.xml \
        $MASTER:~
 
 gcloud --project broad-ctsa compute ssh $MASTER -- 'mkdir -p src/test'
-gcloud --project broad-ctsa compute copy-files \
+gcloud --project broad-ctsa compute scp --recurse \
        ./src/test/resources \
        $MASTER:~/src/test
 
