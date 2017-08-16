@@ -20,7 +20,6 @@ MASTER=$CLUSTER-m
 PATH=$PATH:/usr/local/google-cloud-sdk/bin
 
 function cleanup {
-  gcloud --project broad-ctas compute scp $MASTER:test-output .
   gcloud --project broad-ctsa -q dataproc clusters delete --async $CLUSTER
 }
 trap cleanup EXIT
@@ -46,6 +45,7 @@ gcloud --project broad-ctsa compute scp --recurse \
        ./src/test/resources \
        $MASTER:~/src/test
 
+set +e
 cat <<EOF | gcloud --project broad-ctsa compute ssh $MASTER -- bash
 set -ex
 
@@ -59,3 +59,9 @@ SPARK_CLASSPATH=./hail-all-spark-test.jar \
        ./hail-all-spark-test.jar \
        ./testng.xml
 EOF
+TEST_EXIT_CODE=$?
+set -e
+
+gcloud --project broad-ctsa compute scp --recurse $MASTER:test-output test-output
+
+exit ${TEST_EXIT_CODE}
