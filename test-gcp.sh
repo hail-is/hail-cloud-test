@@ -1,18 +1,37 @@
 #!/bin/bash
 
+if [[ $# -ne 1 ]]
+then
+    cat <<EOF
+Usage:
+    test-gcp.sh DATAPROC_VERSION
+EOF
+fi
+
+set -ex
+
+DATAPROC_VERSION=$1
+ID=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | head -c 12)
+CLUSTER=cluster-ci-$ID
+MASTER=$CLUSTER-m
+
 # pick up gcloud, gsutil
 PATH=$PATH:/usr/local/google-cloud-sdk/bin
 
-ID=$1
-echo "ID=$ID"
+function cleanup {
+  gcloud --project broad-ctsa -q dataproc clusters delete --async $CLUSTER
+}
+trap cleanup EXIT
 
-CLUSTER=cluster-ci-$ID
-echo "CLUSTER=$CLUSTER"
-
-MASTER=$CLUSTER-m
-echo "MASTER=$MASTER"
-
-gcloud --project broad-ctsa dataproc clusters create $CLUSTER --zone us-central1-f --master-machine-type n1-standard-2 --master-boot-disk-size 100 --num-workers 2 --worker-machine-type n1-standard-2 --worker-boot-disk-size 100 --image-version 1.1 --initialization-actions 'gs://hail-dataproc-deps/initialization-actions.sh'
+gcloud --project broad-ctsa dataproc clusters create $CLUSTER \
+    --zone us-central1-f \
+    --master-machine-type n1-standard-2 \
+    --master-boot-disk-size 100 \
+    --num-workers 2 \
+    --worker-machine-type n1-standard-2 \
+    --worker-boot-disk-size 100 \
+    --image-version ${DATAPROC_VERSION} \
+    --initialization-actions 'gs://hail-dataproc-deps/initialization-actions.sh'
 
 # copy up necessary files
 gcloud --project broad-ctsa compute copy-files \
@@ -38,7 +57,3 @@ SPARK_CLASSPATH=./hail-all-spark-test.jar \
        ./hail-all-spark-test.jar \
        ./testng.xml
 EOF
-
-gcloud --project broad-ctsa -q dataproc clusters delete --async $CLUSTER
-
-echo "Done!"
