@@ -6,6 +6,7 @@ then
 Usage:
     test-gcp.sh DATAPROC_VERSION
 EOF
+    exit -1
 fi
 
 set -ex
